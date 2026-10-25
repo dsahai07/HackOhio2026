@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ArrowRight, ArrowUpRight, BookOpen, Check, CheckCircle2, ChevronRight, CircleHelp, FileText, Flower2, Leaf, Lightbulb, LoaderCircle, Plus, RotateCcw, ShieldCheck, Sparkles, Sprout, Target, Trash2, Upload, X } from 'lucide-react';
-import type { Citation, Envelope, PublicSession, QuizResult } from '@/lib/schema';
-import { levels } from '@/lib/schema';
+import { ArrowRight, ArrowUpRight, BookOpen, Check, CheckCircle2, ChevronRight, CircleHelp, FileText, Flower2, Leaf, Lightbulb, LoaderCircle, Lock, Plus, RotateCcw, ShieldCheck, Sparkles, Sprout, Target, Trash2, Upload, X } from 'lucide-react';
+import type { Citation, Envelope, PublicSession, QuizResult, PublicTask, Attempt, Feedback } from '@/lib/schema';
+import { levels, PHASES, getPhaseForTaskIndex } from '@/lib/schema';
+import { isTaskMastered } from '@/lib/engine';
 
 const STORAGE = 'bloom-session-v1';
 type Saved = { envelope: Envelope; answers: Record<string, number>; draft: string };
@@ -96,6 +97,7 @@ export default function Home() {
   const currentStep = !s ? 0 : s.stage === 'analysis' ? 1 : ['diagnostic', 'diagnostic-results'].includes(s.stage) ? 2 : s.stage === 'learning' ? 3 : 4;
   const attempts = s?.task ? s.attempts[s.task.id] || [] : [];
   const latest = attempts.at(-1);
+  const isMastered = isTaskMastered(latest?.feedback);
   const answered = s?.questions?.filter(q => answers[q.id] !== undefined).length || 0;
 
   return <div className="app-shell">
@@ -122,6 +124,7 @@ export default function Home() {
         {!s && <>
           <div className="page-heading"><span className="kicker"><Leaf size={14}/> FROM INFORMATION TO UNDERSTANDING</span><h1>Make room for<br/><em>your next aha.</em></h1><p>Your notes are the beginning. Let’s turn them into a study<br className="desktop-break"/> session that meets you where you are.</p></div>
           {saved && <div className="resume-card"><div><strong>Your study session is waiting.</strong><p>{saved.envelope.session.subject} · Saved on this browser</p></div><button className="button secondary" disabled={!!busy} onClick={() => request('resume', { token: saved.envelope.token })}>Resume session <ArrowRight size={16}/></button></div>}
+          <BloomTaxonomyIntro />
           <div className="start-grid">
             <section className="card materials-card" aria-labelledby="materials-title"><div className="card-title"><span className="soft-icon"><BookOpen size={20}/></span><div><h2 id="materials-title">What are we learning?</h2><p>Bring your materials. We’ll connect the dots.</p></div><span className="step-tag">STEP 01</span></div>
               <label className="field-label" htmlFor="subject">Subject or topic <span>Required</span></label><input id="subject" placeholder="e.g. Data structures & algorithms" value={subject} maxLength={120} onChange={e => setSubject(e.target.value)} disabled={!!busy}/>
@@ -157,14 +160,35 @@ export default function Home() {
         </>}
 
         {s?.stage === 'learning' && s.task && <>
-          <div className="learning-top"><span className="kicker"><Leaf size={14}/> GROW YOUR UNDERSTANDING</span><span className="pill">Task {s.taskIndex + 1} of {s.taskCount}</span></div><div className="level-progress" aria-label="Bloom learning progress">{levels.map((level, i) => <div key={level} className={`${i === s.taskIndex ? 'current' : ''} ${i < s.taskIndex ? 'complete' : ''}`} aria-current={i === s.taskIndex ? 'step' : undefined}><span>{i < s.taskIndex ? <Check size={12}/> : i + 1}</span>{level}</div>)}</div>
+          <div className="learning-top"><span className="kicker"><Leaf size={14}/> GROW YOUR UNDERSTANDING</span><span className="pill">Task {s.taskIndex + 1} of {s.taskCount}</span></div>
+          <CognitivePhaseTracker taskIndex={s.taskIndex} latestFeedback={latest?.feedback} />
+          <div className="level-progress" aria-label="Bloom learning progress">{levels.map((level, i) => <div key={level} className={`${i === s.taskIndex ? 'current' : ''} ${i < s.taskIndex ? 'complete' : ''}`} aria-current={i === s.taskIndex ? 'step' : undefined}><span>{i < s.taskIndex ? <Check size={12}/> : i + 1}</span>{level}</div>)}</div>
           <div className="page-heading compact"><h1 ref={headingRef} tabIndex={-1}>{s.task.level}<em> & grow.</em></h1><p>{s.analysis.topics.find(t => t.id === s.task?.topicId)?.name} · {levelDetails[s.taskIndex]}</p></div>
           <section className="teaching-card"><span className="soft-icon"><BookOpen size={21}/></span><div><h2>A little context</h2><p>{s.task.teaching}</p><Citations citations={s.task.citations} session={s}/></div></section>
           <section className="card section-card task-card"><span className="eyebrow">YOUR TURN</span><h2>{s.task.prompt}</h2><details className="rubric-details"><summary>What a strong response includes</summary><ul>{(s.task.rubric || ['Address each part of the question.', 'Explain the reasoning behind your answer.']).map(r => <li key={r}>{r}</li>)}</ul>{!s.task.rubric && <p>The detailed scoring criteria appear after your attempt.</p>}</details>
             {(!latest || retry) ? <><label htmlFor="response" className="field-label">Your thinking</label><textarea id="response" value={draft} onChange={e => setDraft(e.target.value)} placeholder="Work through the idea in your own words…" rows={6} maxLength={4000} disabled={!!busy}/><div className="input-help">{draft.length}/4,000 characters · Reasoning matters more than length.</div><div className="action-row"><button className="button ghost" disabled={!!busy || !!s.task.hint} onClick={() => request('hint')}><Lightbulb size={17}/> {s.task.hint ? 'Hint opened' : 'A little hint'}</button><button className="button primary" disabled={!!busy || draft.trim().length < 8} onClick={() => request('answer', { answer: draft })}>{retry ? 'Submit revision' : 'Get feedback'} <ArrowRight size={17}/></button></div></> : <div className="submitted-answer"><span className="eyebrow">YOUR RESPONSE</span><p>{latest.answer}</p></div>}
             {s.task.hint && <div className="hint-box"><Lightbulb size={17}/><p>{s.task.hint}</p></div>}
           </section>
-          {latest && <section className="card section-card feedback-card"><div className="section-top"><h2>{s.mode === 'demo' ? 'Demo feedback · keyword-based' : 'AI feedback · Gemini'}</h2><span className="score-pill">{latest.feedback.score}% rubric score</span></div><p className="body-copy">{latest.feedback.summary}</p><ul className="criteria-list">{latest.feedback.criteria.map((c, i) => <li key={i}><span className={c.met ? 'met' : 'unmet'}>{c.met ? <CheckCircle2 size={19}/> : <CircleHelp size={19}/>}</span><div><strong>{c.criterion}</strong><p>{c.feedback}</p></div></li>)}</ul><p className="next-step"><strong>Next step:</strong> {latest.feedback.nextStep}</p><button className="text-button" onClick={() => setShowExample(!showExample)}>{showExample ? 'Hide worked example' : 'View worked example'} <ChevronRight size={16}/></button>{showExample && <div className="model-answer"><p>{s.task.modelAnswer}</p></div>}<div className="action-row"><button className="button secondary" disabled={!!busy || attempts.length >= 3 || retry} onClick={() => { setRetry(true); setDraft(latest.answer); setShowExample(false); }}><RotateCcw size={15}/>Try again ({3 - attempts.length} left)</button><button className="button primary" disabled={!!busy} onClick={() => request('next')}>{s.taskIndex === 5 ? 'Take final assessment' : 'Continue'}<ArrowRight size={17}/></button></div><p className="input-help">Formative feedback can be wrong. Revisions after viewing an example are practice, not independent assessment.</p></section>}
+          {latest && <section className="card section-card feedback-card">
+            <div className="section-top"><h2>{s.mode === 'demo' ? 'Demo feedback · keyword-based' : 'AI feedback · Gemini'}</h2><span className="score-pill">{latest.feedback.score}% rubric score</span></div>
+            {!isMastered ? (
+              <div className="notice mastery-pending" role="alert">
+                <CircleHelp size={20}/>
+                <div>
+                  <strong>Mastery required to advance</strong>
+                  <span>Your response did not satisfy all criteria for this cognitive phase ({latest.feedback.score}% score). Bloom&apos;s framework requires solid understanding before progressing to higher-order tasks. Review the feedback below and submit a revision to continue.</span>
+                </div>
+              </div>
+            ) : (
+              <div className="notice mastery-success" role="status">
+                <CheckCircle2 size={20}/>
+                <div>
+                  <strong>Mastery demonstrated!</strong>
+                  <span>Excellent work. You&apos;ve met the cognitive criteria for {s.task.level} ({latest.feedback.score}% score). You are ready to advance to the next step.</span>
+                </div>
+              </div>
+            )}
+            <p className="body-copy">{latest.feedback.summary}</p><ul className="criteria-list">{latest.feedback.criteria.map((c, i) => <li key={i}><span className={c.met ? 'met' : 'unmet'}>{c.met ? <CheckCircle2 size={19}/> : <CircleHelp size={19}/>}</span><div><strong>{c.criterion}</strong><p>{c.feedback}</p></div></li>)}</ul><p className="next-step"><strong>Next step:</strong> {latest.feedback.nextStep}</p><button className="text-button" onClick={() => setShowExample(!showExample)}>{showExample ? 'Hide worked example' : 'View worked example'} <ChevronRight size={16}/></button>{showExample && <div className="model-answer"><p>{s.task.modelAnswer}</p></div>}<div className="action-row"><button className="button secondary" disabled={!!busy || retry} onClick={() => { setRetry(true); setDraft(latest.answer); setShowExample(false); }}><RotateCcw size={15}/>{attempts.length < 3 ? `Try again (${3 - attempts.length} left)` : 'Revise response'}</button><button className={`button primary ${!isMastered ? 'disabled-mastery' : 'mastery-ready'}`} disabled={!isMastered || !!busy} title={!isMastered ? 'Demonstrate mastery of this cognitive level before continuing' : undefined} onClick={() => request('next')}>{!isMastered && <Lock size={15}/>}{s.taskIndex === 5 ? 'Take final assessment' : 'Continue'}<ArrowRight size={17}/></button></div><p className="input-help">Formative feedback can be wrong. Revisions after viewing an example are practice, not independent assessment.</p></section>}
         </>}
 
         {s?.stage === 'complete' && s.final && s.diagnostic && <>
@@ -176,6 +200,112 @@ export default function Home() {
     </div>
     {confirmClear && <div className="modal-backdrop"><section className="modal card" role="dialog" aria-modal="true" aria-labelledby="clear-title" onKeyDown={e => { if (e.key === 'Escape') setConfirmClear(false); if (e.key === 'Tab') { const buttons = e.currentTarget.querySelectorAll('button'); if (e.shiftKey && document.activeElement === buttons[0]) { e.preventDefault(); buttons[1].focus(); } else if (!e.shiftKey && document.activeElement === buttons[1]) { e.preventDefault(); buttons[0].focus(); } } }}><span className="soft-icon"><Trash2 size={22}/></span><h2 id="clear-title">Make space for a new session?</h2><p>This clears your saved session, responses, and materials from this browser. It cannot be undone. It does not delete data already sent to Gemini.</p><div className="action-row"><button autoFocus className="button secondary" onClick={() => setConfirmClear(false)}>Keep studying</button><button className="button primary" onClick={clear}>Clear saved data</button></div></section></div>}
   </div>;
+}
+
+function BloomTaxonomyIntro() {
+  return (
+    <section className="card bloom-intro-card" aria-labelledby="bloom-intro-heading">
+      <div className="bloom-intro-header">
+        <div>
+          <span className="bloom-intro-badge"><Sparkles size={13}/> EDUCATIONAL PHILOSOPHY</span>
+          <h2 id="bloom-intro-heading">Mastery through Bloom’s Taxonomy:<br/><em>A little understanding, every day.</em></h2>
+          <p>
+            True learning isn’t about cramming disconnected facts—it is a continuous climb from recall to creative application.
+            Bloom’s Taxonomy organizes thinking into a scaffolded hierarchy of cognitive phases. Solidifying foundational concepts
+            empowers you to tackle unfamiliar challenges, analyze trade-offs, and construct original solutions with confidence.
+          </p>
+        </div>
+      </div>
+
+      <div className="phase-ladder">
+        {PHASES.map((p) => (
+          <div key={p.phase} className="phase-ladder-card">
+            <div className="phase-card-top">
+              <span className="phase-num-pill">PHASE 0{p.phase}</span>
+              <span className="phase-subpill">{p.levels.length === 1 ? '1 Level' : `${p.levels.length} Levels`}</span>
+            </div>
+            <div>
+              <div className="phase-card-title">{p.title}</div>
+              <div className="phase-card-tagline">{p.tagline}</div>
+            </div>
+            <p className="phase-card-desc">{p.focus}</p>
+            <div className="phase-card-subpills">
+              {p.levels.map(lvl => (
+                <span key={lvl} className="phase-subpill">{lvl}</span>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mastery-rule-callout">
+        <ShieldCheck size={22}/>
+        <div>
+          <strong>Strict Mastery-Based Progression Rule</strong>
+          <span>
+            Cognitive levels build upon one another. If your response does not yet satisfy the rubric criteria for your current task,
+            you will remain on the exact same phase until you demonstrate understanding. Use the formative feedback to revise your thinking—mastery takes root one step at a time.
+          </span>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function CognitivePhaseTracker({ taskIndex, latestFeedback }: { taskIndex: number; latestFeedback?: Feedback }) {
+  const isMastered = isTaskMastered(latestFeedback);
+
+  return (
+    <div className="cognitive-phase-tracker" aria-label="Bloom cognitive hierarchy progression">
+      {PHASES.map((p) => {
+        const isCompleted = p.taskIndices.every(idx => idx < taskIndex);
+        const isActive = p.taskIndices.includes(taskIndex);
+        const isLocked = p.taskIndices[0] > taskIndex;
+
+        let statusTag = <span className="tracker-status-tag status-locked"><Lock size={10}/> Locked</span>;
+        if (isCompleted) {
+          statusTag = <span className="tracker-status-tag status-completed"><Check size={10}/> Mastered</span>;
+        } else if (isActive) {
+          if (latestFeedback) {
+            statusTag = isMastered
+              ? <span className="tracker-status-tag status-active"><Check size={10}/> Mastered</span>
+              : <span className="tracker-status-tag status-revision"><RotateCcw size={10}/> Needs Revision</span>;
+          } else {
+            statusTag = <span className="tracker-status-tag status-active">Active</span>;
+          }
+        }
+
+        return (
+          <div
+            key={p.phase}
+            className={`tracker-phase ${isCompleted ? 'completed' : ''} ${isActive ? 'active' : ''} ${isLocked ? 'locked' : ''}`}
+            aria-current={isActive ? 'step' : undefined}
+          >
+            <div className="tracker-phase-head">
+              <span className="tracker-phase-num">PHASE 0{p.phase}</span>
+              {statusTag}
+            </div>
+            <div>
+              <div className="tracker-phase-title">{p.title}</div>
+              <div className="tracker-phase-tagline">{p.tagline}</div>
+            </div>
+            <div className="tracker-substeps" title={`${p.levels.join(' & ')} tasks`}>
+              {p.taskIndices.map(tIdx => {
+                const done = tIdx < taskIndex;
+                const current = tIdx === taskIndex;
+                return (
+                  <span
+                    key={tIdx}
+                    className={`tracker-substep ${done ? 'done' : ''} ${current ? 'current' : ''}`}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 function Citations({ citations, session }: { citations: Citation[]; session: PublicSession }) {

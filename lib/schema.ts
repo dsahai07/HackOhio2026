@@ -20,3 +20,51 @@ export type Session = { version: 1; id: string; createdAt: number; mode: 'demo' 
 export type PublicTask = Omit<Task, 'modelAnswer' | 'hint' | 'rubric'> & { hint?: string; modelAnswer?: string; rubric?: string[] };
 export type PublicSession = Omit<Session, 'sources' | 'analysis' | 'tasks'> & { sources: Omit<Source, 'text'>[]; analysis: Omit<Analysis, 'diagnostic' | 'final'>; questions?: Omit<Question, 'answer' | 'explanation'>[]; task?: PublicTask; taskCount: number };
 export type Envelope = { token: string; session: PublicSession };
+
+export type CognitivePhase = {
+  phase: number;
+  title: string;
+  tagline: string;
+  focus: string;
+  levels: readonly ('Remember' | 'Understand' | 'Apply' | 'Analyze' | 'Evaluate' | 'Create')[];
+  taskIndices: readonly number[];
+};
+
+export const PHASES: readonly CognitivePhase[] = [
+  {
+    phase: 1,
+    title: 'Remember',
+    tagline: 'Recalling facts and basic concepts',
+    focus: 'Recall foundational facts, definitions, formulas, and terminology without notes.',
+    levels: ['Remember'],
+    taskIndices: [0]
+  },
+  {
+    phase: 2,
+    title: 'Understand',
+    tagline: 'Explaining ideas or concepts',
+    focus: 'Construct meaning, paraphrase core principles, and explain why concepts work.',
+    levels: ['Understand'],
+    taskIndices: [1]
+  },
+  {
+    phase: 3,
+    title: 'Apply & Analyze',
+    tagline: 'Using information in new situations / Drawing connections among ideas',
+    focus: 'Apply techniques to solve novel challenges and dissect structures into constituent parts.',
+    levels: ['Apply', 'Analyze'],
+    taskIndices: [2, 3]
+  },
+  {
+    phase: 4,
+    title: 'Evaluate & Create',
+    tagline: 'Justifying a stand or decision / Producing new or original work',
+    focus: 'Appraise trade-offs, defend judgments, and synthesize components into original solutions.',
+    levels: ['Evaluate', 'Create'],
+    taskIndices: [4, 5]
+  }
+] as const;
+
+export function getPhaseForTaskIndex(index: number): CognitivePhase {
+  return PHASES.find(p => p.taskIndices.includes(index)) || PHASES[0];
+}

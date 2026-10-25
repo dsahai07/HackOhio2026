@@ -21,3 +21,64 @@
 .seed-4{background:#627e52}.seed-3{color:#344b2b}.level-seed{font-size:11px}.seed-0,.seed-1,.seed-2{color:#4d6240}
 input::placeholder,textarea::placeholder{color:#6c7860}.muted{color:#65745b}.demo-banner{font-size:12px;color:#566239}.hint-box{color:#786226}.score-pill,.growth-pill{color:#4d6a39}.score-comparison p{font-size:11px}
 @media(max-width:680px){.sidebar .steps li{font-size:9px!important}.consent{font-size:12px}.upload-zone small{font-size:10px;text-align:center;padding:0 10px}.exam-title p{font-size:11px}.taxonomy-list small{font-size:11px}.taxonomy-list{gap:22px 12px}.optional{display:none}.question-card legend{font-size:15px}.option{font-size:13px}.header-actions .local-badge{font-size:9px}.score-comparison p{font-size:10px}.demo-banner{font-size:11px}.learning-top .kicker{font-size:8px}}
+
+/* Bloom's Taxonomy Intro Section */
+.bloom-intro-card{background:linear-gradient(135deg,#fbfcf7 0%,#f5f8f0 100%);border:1px solid #dce4d3;border-radius:var(--radius);padding:28px;margin-bottom:28px;box-shadow:0 4px 20px #273f2905}
+.bloom-intro-header{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;margin-bottom:20px}
+.bloom-intro-header h2{font-size:24px;line-height:1.3;letter-spacing:-0.8px;margin-top:6px}
+.bloom-intro-header h2 em{font-family:Georgia,serif;font-weight:400;color:#5a7b4f}
+.bloom-intro-header p{font-size:13px;line-height:1.8;color:#5f6f55;max-width:780px;margin-top:8px}
+.bloom-intro-badge{display:inline-flex;align-items:center;gap:7px;background:#e2ebdc;color:var(--green);font-size:10px;font-weight:700;letter-spacing:1px;padding:4px 10px;border-radius:20px}
+.phase-ladder{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:22px 0}
+.phase-ladder-card{background:#ffffff;border:1px solid #dde5d5;border-radius:12px;padding:18px;display:flex;flex-direction:column;justify-content:space-between;gap:12px;transition:transform .15s,box-shadow .15s}
+.phase-ladder-card:hover{transform:translateY(-2px);box-shadow:0 6px 16px #315c4510}
+.phase-card-top{display:flex;align-items:center;justify-content:space-between}
+.phase-num-pill{font-size:10px;font-weight:800;letter-spacing:1px;color:#78916a;background:#edf3e6;padding:3px 8px;border-radius:12px}
+.phase-card-title{font-size:15px;font-weight:750;color:#283c30;margin-top:4px}
+.phase-card-tagline{font-size:11px;font-weight:600;color:#6d825f;line-height:1.4}
+.phase-card-desc{font-size:11px;color:#73816a;line-height:1.6}
+.phase-card-subpills{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.phase-subpill{font-size:9px;background:#f3f6ec;border:1px solid #e1e8d9;padding:2px 7px;border-radius:4px;color:#5d6f51;font-weight:600}
+.mastery-rule-callout{display:flex;align-items:flex-start;gap:14px;background:#eef3e6;border:1px solid #d4dfc9;border-radius:10px;padding:16px 20px;font-size:12px;color:#4a623f;line-height:1.7;margin-top:18px}
+.mastery-rule-callout svg{flex-shrink:0;color:var(--green);margin-top:2px}
+.mastery-rule-callout strong{color:#283c30;display:block;margin-bottom:2px}
+
+/* Cognitive Phase Hierarchy Tracker (in Learning Stage) */
+.cognitive-phase-tracker{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:24px 0 28px}
+.tracker-phase{background:#fffefa;border:1px solid #e2e7dc;border-radius:10px;padding:14px;display:flex;flex-direction:column;justify-content:space-between;gap:8px;position:relative}
+.tracker-phase.active{border-color:var(--green);background:#fbfdf9;box-shadow:0 0 0 2px #315c4520}
+.tracker-phase.completed{background:#f3f7ee;border-color:#cfdac4}
+.tracker-phase.locked{opacity:0.6;background:#f7f8f4}
+.tracker-phase-head{display:flex;align-items:center;justify-content:space-between}
+.tracker-phase-num{font-size:10px;font-weight:700;color:#718562}
+.tracker-status-tag{font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;display:inline-flex;align-items:center;gap:3px}
+.status-completed{background:#dbe9d3;color:#355a29}
+.status-active{background:#315c45;color:white}
+.status-revision{background:#fdf2d8;color:#966e20;border:1px solid #f1dda8}
+.status-locked{background:#e7ebe0;color:#7a8a6f}
+.tracker-phase-title{font-size:13px;font-weight:750;color:#283c30}
+.tracker-phase-tagline{font-size:10px;color:#708064;line-height:1.4}
+.tracker-substeps{display:flex;gap:4px;margin-top:4px}
+.tracker-substep{flex:1;height:4px;border-radius:2px;background:#e5ebd9}
+.tracker-substep.done{background:var(--green)}
+.tracker-substep.current{background:#7c9c64;animation:pulse-substep 1.8s infinite}
+@keyframes pulse-substep{0%,100%{opacity:1}50%{opacity:0.5}}
+
+/* Mastery State Notices */
+.notice.mastery-pending{background:#fff9ea;border-color:#fae3b3;color:#8f651c}
+.notice.mastery-pending strong{color:#744e0e;display:block;margin-bottom:2px}
+.notice.mastery-success{background:#edf6e8;border-color:#c8dfbf;color:#2f5f24}
+.notice.mastery-success strong{color:#204818;display:block;margin-bottom:2px}
+.disabled-mastery{opacity:0.6;cursor:not-allowed}
+.mastery-ready{box-shadow:0 0 0 3px #315c4520}
+
+@media(max-width:950px){
+  .phase-ladder{grid-template-columns:repeat(2,1fr)}
+  .cognitive-phase-tracker{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:680px){
+  .phase-ladder{grid-template-columns:1fr}
+  .cognitive-phase-tracker{grid-template-columns:1fr}
+  .bloom-intro-card{padding:18px}
+  .bloom-intro-header h2{font-size:20px}
+}

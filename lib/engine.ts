@@ -196,3 +196,9 @@ export function demoFeedback(task: Task, answer: string): Feedback {
   const criteria = task.rubric.map((criterion, i) => ({ criterion, met: checks[i].test(answer), feedback: checks[i].test(answer) ? 'The expected idea was detected in your response.' : 'This idea was not detected. Compare your reasoning with the worked example.' }));
   return { score: Math.round(criteria.filter(c => c.met).length / criteria.length * 100), summary: 'Demo feedback uses simple keyword checks, not Gemini. It may miss valid wording or accept incorrect reasoning; use the rubric and example to self-check.', criteria, nextStep: 'Revise any missing idea in your own words, then continue when you are ready.' };
 }
+
+export function isTaskMastered(feedback?: Feedback): boolean {
+  if (!feedback) return false;
+  const allCriteriaMet = feedback.criteria.length > 0 && feedback.criteria.every(c => c.met);
+  return allCriteriaMet || feedback.score >= 70;
+}

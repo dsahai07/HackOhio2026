@@ -40,3 +40,25 @@ test('quiz requires complete valid answers and scores accurately', () => {
   assert.throws(() => grade(demoAnalysis.diagnostic, [], demoAnalysis));
   assert.equal(grade(demoAnalysis.diagnostic, demoAnalysis.diagnostic.map(q => q.answer), demoAnalysis).score, 100);
 });
+test('phases cleanly align with Bloom hierarchy across all six tasks', () => {
+  const { PHASES, getPhaseForTaskIndex } = require('../lib/schema');
+  assert.equal(PHASES.length, 4);
+  assert.equal(PHASES[0].title, 'Remember');
+  assert.equal(PHASES[1].title, 'Understand');
+  assert.equal(PHASES[2].title, 'Apply & Analyze');
+  assert.equal(PHASES[3].title, 'Evaluate & Create');
+
+  assert.equal(getPhaseForTaskIndex(0)?.phase, 1);
+  assert.equal(getPhaseForTaskIndex(1)?.phase, 2);
+  assert.equal(getPhaseForTaskIndex(2)?.phase, 3);
+  assert.equal(getPhaseForTaskIndex(3)?.phase, 3);
+  assert.equal(getPhaseForTaskIndex(4)?.phase, 4);
+  assert.equal(getPhaseForTaskIndex(5)?.phase, 4);
+});
+test('mastery-based progression criteria requires score >= 70 or all criteria met', () => {
+  const { isTaskMastered } = require('../lib/engine');
+  assert.equal(isTaskMastered(undefined), false);
+  assert.equal(isTaskMastered({ score: 45, summary: 'Need work', criteria: [{ criterion: 'C1', met: false, feedback: 'no' }], nextStep: 'revise' }), false);
+  assert.equal(isTaskMastered({ score: 75, summary: 'Good', criteria: [{ criterion: 'C1', met: false, feedback: 'ok' }], nextStep: 'continue' }), true);
+  assert.equal(isTaskMastered({ score: 65, summary: 'Met all', criteria: [{ criterion: 'C1', met: true, feedback: 'good' }], nextStep: 'continue' }), true);
+});
