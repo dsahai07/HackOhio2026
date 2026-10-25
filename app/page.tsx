@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ArrowRight, ArrowUpRight, BookOpen, Check, CheckCircle2, ChevronRight, CircleHelp, FileText, Flame, Flower2, Layers, Leaf, Lightbulb, LoaderCircle, Lock, Plus, RotateCcw, ShieldCheck, Sparkles, Sprout, Target, Trash2, Upload, X } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, BookOpen, Check, CheckCircle2, ChevronRight, CircleHelp, FileText, Flame, Flower2, Layers, Leaf, Lightbulb, LoaderCircle, Lock, PanelLeftClose, PanelLeftOpen, Plus, RotateCcw, ShieldCheck, Sparkles, Sprout, Target, Trash2, Upload, X } from 'lucide-react';
 import type { Citation, Envelope, PublicSession, QuizResult, PublicTask, Attempt, Feedback, Topic } from '@/lib/schema';
 import { levels, PHASES, getPhaseForTaskIndex } from '@/lib/schema';
 import { isTaskMastered } from '@/lib/engine';
@@ -9,16 +9,24 @@ import { isTaskMastered } from '@/lib/engine';
 const STORAGE = 'bloom-session-v1';
 type Saved = { envelope: Envelope; answers: Record<string, number>; draft: string };
 const levelDetails = ['Bring the essentials to mind.', 'Make the idea your own.', 'Put knowledge to work.', 'Find the connections.', 'Make a reasoned judgment.', 'Build something original.'];
+const stepIcons = [
+  <BookOpen size={13} key="materials" />,
+  <Lightbulb size={13} key="ideas" />,
+  <Target size={13} key="diagnostic" />,
+  <Leaf size={13} key="learning" />,
+  <Sparkles size={13} key="progress" />,
+];
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'study' | 'home' | 'taxonomy'>('study');
-  const [selectedFormat, setSelectedFormat] = useState<string>('frq');
   const [selectedLeft, setSelectedLeft] = useState<number | null>(null);
   const [matches, setMatches] = useState<Record<number, number>>({});
   const [envelope, setEnvelope] = useState<Envelope | null>(null);
   const [saved, setSaved] = useState<Saved | null>(null);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [draft, setDraft] = useState('');
+  const [blankInputs, setBlankInputs] = useState<Record<number, string>>({});
+  const [reasoningDraft, setReasoningDraft] = useState('');
   const [subject, setSubject] = useState('');
   const [text, setText] = useState('');
   const [files, setFiles] = useState<File[]>([]);
@@ -30,10 +38,26 @@ export default function Home() {
   const [confirmClear, setConfirmClear] = useState(false);
   const [retry, setRetry] = useState(false);
   const [showExample, setShowExample] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const busyRef = useRef(false);
   const failedRequest = useRef<{ action: string; extra: Record<string, unknown>; form?: FormData } | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const s = envelope?.session;
+
+  useEffect(() => {
+    try {
+      const isCollapsed = localStorage.getItem('blooms-sidebar-collapsed') === 'true';
+      if (isCollapsed) setSidebarCollapsed(true);
+    } catch {}
+  }, []);
+
+  const toggleSidebar = () => {
+    setSidebarCollapsed(prev => {
+      const next = !prev;
+      try { localStorage.setItem('blooms-sidebar-collapsed', String(next)); } catch {}
+      return next;
+    });
+  };
 
   useEffect(() => {
     try {
@@ -53,11 +77,12 @@ export default function Home() {
   }, [envelope, answers, draft]);
   useEffect(() => { if (s) headingRef.current?.focus(); }, [s?.stage, s?.taskIndex]); // Move focus only when the step changes.
   useEffect(() => {
-    if (s?.task?.format) setSelectedFormat(s.task.format);
-    else setSelectedFormat('frq');
     setSelectedLeft(null);
     setMatches({});
-  }, [s?.task?.id, s?.task?.format]);
+    setDraft('');
+    setBlankInputs({});
+    setReasoningDraft('');
+  }, [s?.task?.id]);
 
   async function request(action: string, extra: Record<string, unknown> = {}, form?: FormData) {
     if (busyRef.current) return;
@@ -102,7 +127,7 @@ export default function Home() {
   function clear() {
     try { localStorage.removeItem(STORAGE); setStorageError(''); } catch { setStorageError('Browser storage could not be cleared. Clear this site’s data in your browser settings.'); }
     failedRequest.current = null;
-    setEnvelope(null); setSaved(null); setAnswers({}); setDraft(''); setFiles([]); setExam(null); setText(''); setSubject(''); setConsent(false); setError(''); setConfirmClear(false);
+    setEnvelope(null); setSaved(null); setAnswers({}); setDraft(''); setBlankInputs({}); setReasoningDraft(''); setFiles([]); setExam(null); setText(''); setSubject(''); setConsent(false); setError(''); setConfirmClear(false);
   }
   const currentStep = !s ? 0 : s.stage === 'analysis' ? 1 : ['diagnostic', 'diagnostic-results'].includes(s.stage) ? 2 : s.stage === 'learning' ? 3 : 4;
   const attempts = s?.task ? s.attempts[s.task.id] || [] : [];
@@ -130,8 +155,8 @@ export default function Home() {
   return <div className="app-shell">
     <a className="skip-link" href="#main">Skip to content</a>
     <header className="topbar">
-      <a href="/" className="brand" aria-label="Bloom home" onClick={e => { e.preventDefault(); setActiveTab('study'); }}>
-        <span className="brand-icon"><Flower2 size={29} strokeWidth={1.5}/></span>bloom<span className="brand-dot">.</span>
+      <a href="/" className="brand" aria-label="Blooms home" onClick={e => { e.preventDefault(); setActiveTab('study'); }}>
+        <span className="brand-icon"><Flower2 size={29} strokeWidth={1.5}/></span>blooms<span className="brand-dot">.</span>
       </a>
       <nav className="nav-links" aria-label="Main Navigation">
         <button
@@ -165,18 +190,78 @@ export default function Home() {
       </div>
     </header>
 
-    <div className="workspace">
-      <aside className="sidebar" aria-label="Session progress">
+    <div className={`workspace ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+      <aside className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`} aria-label="Session progress">
         <div>
-          <p className="eyebrow">YOUR STUDY SESSION</p>
+          <div className="sidebar-header-row">
+            {!sidebarCollapsed && <p className="eyebrow">YOUR STUDY SESSION</p>}
+            <button
+              type="button"
+              className="sidebar-fold-btn"
+              onClick={toggleSidebar}
+              aria-label={sidebarCollapsed ? "Expand sidebar" : "Fold in sidebar"}
+              title={sidebarCollapsed ? "Expand sidebar" : "Fold in sidebar"}
+            >
+              {sidebarCollapsed ? <PanelLeftOpen size={15}/> : <PanelLeftClose size={14}/>}
+              {!sidebarCollapsed && <span>Fold</span>}
+            </button>
+          </div>
           <ol className="steps">
             {['Add materials', 'Find the big ideas', 'Check your starting point', 'Grow your understanding', 'See your progress'].map((name, i) => (
-              <li key={name} className={`${currentStep === i ? 'active' : ''} ${currentStep > i ? 'done' : ''}`} aria-current={currentStep === i ? 'step' : undefined}>
-                <span className="step-number">{currentStep > i ? <Check size={14}/> : String(i + 1).padStart(2, '0')}</span>
-                <span>{name}</span>
+              <li
+                key={name}
+                className={`${currentStep === i ? 'active' : ''} ${currentStep > i ? 'done' : ''}`}
+                aria-current={currentStep === i ? 'step' : undefined}
+                title={`0${i + 1} · ${name}`}
+                onClick={() => { if (sidebarCollapsed) setSidebarCollapsed(false); }}
+              >
+                <span className="step-number">
+                  {currentStep > i ? <Check size={13}/> : sidebarCollapsed ? stepIcons[i] : String(i + 1).padStart(2, '0')}
+                </span>
+                <span className="step-label">{name}</span>
+                {sidebarCollapsed && <span className="step-tooltip">0{i + 1} · {name}</span>}
               </li>
             ))}
           </ol>
+
+          {/* Session Progress & Stats Widget in Sidebar */}
+          {s && !sidebarCollapsed && (
+            <div className="sidebar-stats-card">
+              <div className="sidebar-stats-top">
+                <span className="sidebar-stats-title">Progress</span>
+                <span className="sidebar-stats-percent">{overallProgress}%</span>
+              </div>
+              <div className="sidebar-meter-track" role="progressbar" aria-valuenow={overallProgress} aria-valuemin={0} aria-valuemax={100}>
+                <div className="sidebar-meter-fill" style={{ width: `${overallProgress}%` }} />
+              </div>
+              <div className="sidebar-badges-row">
+                <span className="sidebar-badge" title="Mastery Streak"><Flame size={12}/> {streak} Streak</span>
+                <span className="sidebar-badge" title="Blooms XP"><Sparkles size={12}/> {xp} XP</span>
+              </div>
+              {s.task && (
+                <>
+                  <div className="sidebar-phase-tag" title={currentPhase.tagline}>
+                    <Leaf size={11}/> Phase 0{currentPhase.phase}: {currentPhase.title}
+                  </div>
+                  <div className="sidebar-phases-mini-list">
+                    {PHASES.map((p) => {
+                      const isCompleted = p.taskIndices.every(idx => idx < (s.taskIndex ?? 0));
+                      const isActive = p.taskIndices.includes(s.taskIndex ?? 0);
+                      return (
+                        <div key={p.phase} className={`sidebar-phase-mini-item ${isActive ? 'active' : ''} ${isCompleted ? 'done' : ''}`}>
+                          <span className="phase-mini-dot">
+                            {isCompleted ? <Check size={8}/> : p.phase}
+                          </span>
+                          <span className="phase-mini-label">{p.title}</span>
+                          {isActive && <span className="phase-mini-badge">Now</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
         <div className="sidebar-bottom">
           <div className="growth-illustration" aria-hidden="true">
@@ -186,6 +271,15 @@ export default function Home() {
           <h3>Good learning takes root.</h3>
           <p>Start with what you know.<br/>Grow one idea at a time.</p>
           <div className="sidebar-foot"><ShieldCheck size={14}/> No account. Just curiosity.</div>
+          {sidebarCollapsed && (
+            <div
+              className="sidebar-rail-sprout"
+              title={`Good learning takes root · ${streak} Streak · ${xp} XP · Click to expand`}
+              onClick={() => setSidebarCollapsed(false)}
+            >
+              <Sprout size={18} strokeWidth={1.5}/>
+            </div>
+          )}
         </div>
       </aside>
 
@@ -199,48 +293,6 @@ export default function Home() {
           {storageError && <div className="notice warning" role="status">{storageError}</div>}
           {error && <div className="notice error" role="alert"><CircleHelp size={19}/><span>{error}</span>{failedRequest.current && <button className="button secondary" disabled={!!busy} onClick={() => { const failed = failedRequest.current; if (failed) void request(failed.action, failed.extra, failed.form); }}>Try again</button>}<button aria-label="Dismiss error" className="icon-button" onClick={() => setError('')}><X size={16}/></button></div>}
           {busy && <div className="busy-bar" role="status"><LoaderCircle size={18} className="spin"/>{busy}<span>Usually under a minute</span></div>}
-
-          {/* Gamification Progress Strip */}
-          <div className="overall-progress-strip" aria-label="Course module progress">
-            <div className="progress-strip-left">
-              <span className="progress-strip-label">Course Module Progress</span>
-              <div className="overall-meter-track" role="progressbar" aria-valuenow={overallProgress} aria-valuemin={0} aria-valuemax={100}>
-                <div className="overall-meter-fill" style={{ width: `${overallProgress}%` }} />
-              </div>
-              <span className="overall-percent-num">{overallProgress}%</span>
-            </div>
-            <div className="progress-strip-stats">
-              <span className="gamification-stat streak-stat" title="Mastery Streak"><Flame size={14}/> {streak} Step Streak</span>
-              <span className="gamification-stat xp-stat" title="Bloom XP Earned"><Sparkles size={14}/> {xp} XP</span>
-              {s?.task && <span className="gamification-stat" title="Active Cognitive Phase"><Leaf size={14}/> Phase 0{currentPhase.phase}: {currentPhase.title}</span>}
-            </div>
-          </div>
-
-          {/* Structured Assessment Lifecycle Stepper */}
-          {s && (
-            <div className="assessment-lifecycle-tracker" aria-label="Assessment Lifecycle">
-              <div className={`lifecycle-step-card ${['diagnostic', 'diagnostic-results'].includes(s.stage) ? 'active' : ['learning', 'final', 'complete'].includes(s.stage) ? 'completed' : ''}`}>
-                <span className="lifecycle-step-num">Step 01 · Entry</span>
-                <strong className="lifecycle-step-name">Diagnostic Check</strong>
-                <span className="lifecycle-step-type">MCQ Baseline Check</span>
-              </div>
-              <div className={`lifecycle-step-card ${s.stage === 'learning' ? 'active' : ['final', 'complete'].includes(s.stage) ? 'completed' : ''}`}>
-                <span className="lifecycle-step-num">Step 02 · Core</span>
-                <strong className="lifecycle-step-name">Mastery Learning</strong>
-                <span className="lifecycle-step-type">Blended Question Formats</span>
-              </div>
-              <div className={`lifecycle-step-card ${s.stage === 'final' ? 'active' : s.stage === 'complete' ? 'completed' : ''}`}>
-                <span className="lifecycle-step-num">Step 03 · Exit</span>
-                <strong className="lifecycle-step-name">Comprehensive Test</strong>
-                <span className="lifecycle-step-type">MCQ Knowledge Verification</span>
-              </div>
-              <div className={`lifecycle-step-card ${s.stage === 'complete' ? 'active completed' : ''}`}>
-                <span className="lifecycle-step-num">Step 04 · Outcomes</span>
-                <strong className="lifecycle-step-name">Growth Report</strong>
-                <span className="lifecycle-step-type">Before → After Gain Metrics</span>
-              </div>
-            </div>
-          )}
 
           {!s && <>
             <div className="page-heading"><span className="kicker"><Leaf size={14}/> FROM INFORMATION TO UNDERSTANDING</span><h1>Make room for<br/><em>your next aha.</em></h1><p>Your notes are the beginning. Let’s turn them into a study<br className="desktop-break"/> session that meets you where you are.</p></div>
@@ -258,7 +310,7 @@ export default function Home() {
                 <button className="button primary wide" onClick={start} disabled={!!busy}>Create my study session <ArrowRight size={17}/></button><p className="private-note"><ShieldCheck size={13}/> Progress saved in this browser. No account needed.</p>
               </section>
               <aside className="right-column"><section className="path-card"><span className="eyebrow">MORE THAN MEMORIZATION</span><h2>Six ways to <br/>make it stick.</h2><p>A thoughtful path through <br/>Bloom’s taxonomy.</p><ol className="taxonomy-list">{levels.map((level, i) => <li key={level}><span className={`level-seed seed-${i}`}>{String(i + 1).padStart(2, '0')}</span><div><strong>{level}</strong><small>{levelDetails[i]}</small></div></li>)}</ol><div className="path-footer"><Sparkles size={15}/> Adapts to what you need most</div></section>
-                <section className="demo-card"><span className="demo-pill">NO MATERIALS? NO PROBLEM.</span><h3>Take Bloom for a spin.</h3><p>Explore a complete computer science session with our built-in demo.</p><div className="demo-topics"><span>Data structures</span><span>Binary search</span><span>Hash tables</span><span>Complexity</span></div><button className="text-button" disabled={!!busy} onClick={() => request('demo')}>Try the CS demo <ArrowUpRight size={17}/></button><small>No API key needed. Uses sample content.</small></section>
+                <section className="demo-card"><span className="demo-pill">NO MATERIALS? NO PROBLEM.</span><h3>Take Blooms for a spin.</h3><p>Explore a complete computer science session with our built-in demo.</p><div className="demo-topics"><span>Data structures</span><span>Binary search</span><span>Hash tables</span><span>Complexity</span></div><button className="text-button" disabled={!!busy} onClick={() => request('demo')}>Try the CS demo <ArrowUpRight size={17}/></button><small>No API key needed. Uses sample content.</small></section>
               </aside>
             </div><div className="bottom-note"><span>Rooted in learning science.</span> Designed for your next breakthrough.</div>
           </>}
@@ -286,10 +338,38 @@ export default function Home() {
           </>}
 
           {s?.stage === 'learning' && s.task && <>
-            <div className="learning-top"><span className="kicker"><Leaf size={14}/> GROW YOUR UNDERSTANDING</span><span className="pill">Task {s.taskIndex + 1} of {s.taskCount}</span></div>
-            <CognitivePhaseTracker taskIndex={s.taskIndex} latestFeedback={latest?.feedback} />
-            <SequentialLectureMap session={s} currentTopicId={activeTopicId} />
-            <div className="level-progress" aria-label="Bloom learning progress">{levels.map((level, i) => <div key={level} className={`${i === s.taskIndex ? 'current' : ''} ${i < s.taskIndex ? 'complete' : ''}`} aria-current={i === s.taskIndex ? 'step' : undefined}><span>{i < s.taskIndex ? <Check size={12}/> : i + 1}</span>{level}</div>)}</div>
+            {/* Clean, Condensed Header with Phase & Task Count */}
+            <div className="learning-top">
+              <span className="kicker"><Leaf size={14}/> GROW YOUR UNDERSTANDING</span>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <span className="pill" title={currentPhase.tagline}>Phase 0{currentPhase.phase}: {currentPhase.title}</span>
+                <span className="pill">Task {s.taskIndex + 1} of {s.taskCount}</span>
+              </div>
+            </div>
+
+            {/* Bloom 6-Level Progress */}
+            <div className="level-progress" aria-label="Blooms learning progress">
+              {levels.map((level, i) => (
+                <div key={level} className={`${i === s.taskIndex ? 'current' : ''} ${i < s.taskIndex ? 'complete' : ''}`} aria-current={i === s.taskIndex ? 'step' : undefined}>
+                  <span>{i < s.taskIndex ? <Check size={12}/> : i + 1}</span>{level}
+                </div>
+              ))}
+            </div>
+
+            {/* Collapsible Syllabus Map so it doesn't push the question down */}
+            {orderedTopics.length > 0 && (
+              <details className="syllabus-roadmap-details">
+                <summary>
+                  <Layers size={13}/>
+                  <span>Lecture Syllabus Roadmap ({orderedTopics.length} topics)</span>
+                  <ChevronRight size={13} className="syllabus-arrow"/>
+                </summary>
+                <div className="syllabus-roadmap-content">
+                  <SequentialLectureMap session={s} currentTopicId={activeTopicId} />
+                </div>
+              </details>
+            )}
+
             <div className="page-heading compact"><h1 ref={headingRef} tabIndex={-1}>{s.task.level}<em> & grow.</em></h1><p>{s.analysis.topics.find(t => t.id === s.task?.topicId)?.name} · {levelDetails[s.taskIndex]}</p></div>
             <section className="teaching-card"><span className="soft-icon"><BookOpen size={21}/></span><div><h2>A little context</h2><p>{s.task.teaching}</p><Citations citations={s.task.citations} session={s}/></div></section>
             <section className="card section-card task-card">
@@ -302,184 +382,226 @@ export default function Home() {
               </details>
 
               {(!latest || retry) ? (
-                <>
-                  {/* Diverse Question Format Switcher */}
-                  <div className="format-switcher-row">
-                    <span>Question Format:</span>
-                    <div className="format-pills" role="tablist" aria-label="Practice Question Format">
-                      <button
-                        type="button"
-                        className={`format-pill ${selectedFormat === 'mcq' ? 'active' : ''}`}
-                        onClick={() => { setSelectedFormat('mcq'); if (s.task?.mcqOptions?.[0]) setDraft(s.task.mcqOptions[0]); }}
-                      >
-                        🔘 Multiple Choice
-                      </button>
-                      <button
-                        type="button"
-                        className={`format-pill ${selectedFormat === 'fill-blank' ? 'active' : ''}`}
-                        onClick={() => {
-                          setSelectedFormat('fill-blank');
-                          if (s.task?.blankTemplate) {
-                            setDraft(s.task.blankTemplate.replace(/\[(.*?)\]/g, '$1'));
-                          }
-                        }}
-                      >
-                        ✏️ Fill in Blank
-                      </button>
-                      <button
-                        type="button"
-                        className={`format-pill ${selectedFormat === 'matching' ? 'active' : ''}`}
-                        onClick={() => {
-                          setSelectedFormat('matching');
-                          if (s.task?.matchingPairs) {
-                            setDraft(s.task.matchingPairs.map(p => `${p.left} -> ${p.right}`).join('; '));
-                          }
-                        }}
-                      >
-                        🔗 Matching
-                      </button>
-                      <button
-                        type="button"
-                        className={`format-pill ${selectedFormat === 'frq' ? 'active' : ''}`}
-                        onClick={() => setSelectedFormat('frq')}
-                      >
-                        📝 Free Response
-                      </button>
-                    </div>
-                  </div>
+                (() => {
+                  const taskFormat = s.task.format || (s.task.blankTemplate || /\[BLANK\d*\]|fill in the (blank|missing)/i.test(s.task.prompt) ? 'fill-blank' : s.task.mcqOptions?.length ? 'mcq' : s.task.matchingPairs?.length ? 'matching' : 'frq');
+                  const rawTemplate = s.task.blankTemplate || (s.task.prompt.includes('[') ? s.task.prompt.replace(/^fill in the (missing )?terms?:\s*/i, '') : s.task.prompt);
+                  const blankMatches = Array.from(rawTemplate.matchAll(/\[(.*?)\]/g));
 
-                  {/* MCQ Interactive Option List */}
-                  {selectedFormat === 'mcq' && s.task.mcqOptions && (
-                    <div className="interactive-mcq-grid" role="radiogroup" aria-label="Multiple Choice Options">
-                      {s.task.mcqOptions.map((opt, oIdx) => {
-                        const isSelected = draft === opt;
-                        return (
-                          <div
-                            key={oIdx}
-                            className={`interactive-mcq-option ${isSelected ? 'selected' : ''}`}
-                            onClick={() => setDraft(opt)}
-                          >
-                            <span className="option-letter-box">{'ABCD'[oIdx]}</span>
-                            <span>{opt}</span>
+                  return (
+                    <>
+                      {/* Read-Only Format Indicator */}
+                      <div className="format-indicator-bar">
+                        <span className="format-badge">
+                          {taskFormat === 'fill-blank' && '✏️ Fill in the Blank'}
+                          {taskFormat === 'mcq' && '🔘 Multiple Choice'}
+                          {taskFormat === 'matching' && '🔗 Concept Matching'}
+                          {taskFormat === 'frq' && '📝 Free Response'}
+                        </span>
+                        <span className="format-instructions">
+                          {taskFormat === 'fill-blank' && 'Complete the missing terms below to solidify your understanding.'}
+                          {taskFormat === 'mcq' && 'Select the correct option below.'}
+                          {taskFormat === 'matching' && 'Pair concepts on the left with definitions on the right.'}
+                          {taskFormat === 'frq' && 'Explain your reasoning in your own words.'}
+                        </span>
+                      </div>
+
+                      {/* MCQ Interactive Option List */}
+                      {taskFormat === 'mcq' && s.task.mcqOptions && s.task.mcqOptions.length > 0 && (
+                        <div className="interactive-mcq-grid" role="radiogroup" aria-label="Multiple Choice Options">
+                          {s.task.mcqOptions.map((opt, oIdx) => {
+                            const isSelected = draft === opt;
+                            return (
+                              <div
+                                key={oIdx}
+                                className={`interactive-mcq-option ${isSelected ? 'selected' : ''}`}
+                                onClick={() => setDraft(opt)}
+                              >
+                                <span className="option-letter-box">{'ABCD'[oIdx]}</span>
+                                <span>{opt}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Fill-in-the-blank Interactive Box */}
+                      {taskFormat === 'fill-blank' && (
+                        <div className="interactive-blank-box">
+                          <div className="blank-template-card">
+                            <span className="blank-template-kicker">STATEMENT TO COMPLETE</span>
+                            <p className="blank-template-text">
+                              {rawTemplate.split(/\[.*?\]/).map((part, pIdx, arr) => (
+                                <span key={pIdx}>
+                                  {part}
+                                  {pIdx < arr.length - 1 && (
+                                    <span className={`blank-inline-chip ${blankInputs[pIdx]?.trim() ? 'filled' : 'empty'}`}>
+                                      {blankInputs[pIdx]?.trim() || `[Blank ${pIdx + 1}]`}
+                                    </span>
+                                  )}
+                                </span>
+                              ))}
+                            </p>
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
 
-                  {/* Fill-in-the-blank Interactive Box */}
-                  {selectedFormat === 'fill-blank' && s.task.blankTemplate && (
-                    <div className="interactive-blank-box">
-                      <p className="blank-template-text">
-                        {s.task.blankTemplate.split(/\[.*?\]/).map((part, pIdx, arr) => (
-                          <span key={pIdx}>
-                            {part}
-                            {pIdx < arr.length - 1 && <span className="blank-highlight">_____</span>}
-                          </span>
-                        ))}
-                      </p>
-                      <div className="blank-input-row">
-                        <input
-                          className="blank-input-field"
-                          placeholder="Type response to fill in the missing concept..."
-                          value={draft}
-                          disabled={!!busy}
-                          onChange={e => setDraft(e.target.value)}
-                        />
-                      </div>
-                    </div>
-                  )}
+                          {blankMatches.length > 0 && (
+                            <div className="blank-inputs-grid">
+                              {blankMatches.map((bm, bIdx) => (
+                                <div key={bIdx} className="blank-input-group">
+                                  <label htmlFor={`blank-input-${bIdx}`} className="blank-input-label">
+                                    <span className="blank-input-num">0{bIdx + 1}</span>
+                                    <span>Blank {bIdx + 1}</span>
+                                  </label>
+                                  <input
+                                    id={`blank-input-${bIdx}`}
+                                    type="text"
+                                    className="blank-text-input"
+                                    placeholder={`Type missing term ${bIdx + 1}…`}
+                                    value={blankInputs[bIdx] || ''}
+                                    disabled={!!busy}
+                                    onChange={(e) => {
+                                      const next = { ...blankInputs, [bIdx]: e.target.value };
+                                      setBlankInputs(next);
+                                      const termsText = blankMatches
+                                        .map((_, i) => `Blank ${i + 1}: ${next[i] || ''}`)
+                                        .join(' · ');
+                                      const full = reasoningDraft.trim() ? `${termsText}\n\nReasoning: ${reasoningDraft}` : termsText;
+                                      setDraft(full);
+                                    }}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          )}
 
-                  {/* Matching Interactive Columns */}
-                  {selectedFormat === 'matching' && s.task.matchingPairs && (
-                    <div className="interactive-matching-box">
-                      <div className="interactive-matching-grid">
-                        <div className="matching-column">
-                          <span className="matching-column-title">CONCEPTS / STEPS</span>
-                          {s.task.matchingPairs.map((p, pIdx) => {
-                            const isSelected = selectedLeft === pIdx;
-                            const isMatched = matches[pIdx] !== undefined;
-                            return (
-                              <div
-                                key={pIdx}
-                                className={`matching-card ${isSelected ? 'selected' : ''} ${isMatched ? 'matched' : ''}`}
-                                onClick={() => setSelectedLeft(pIdx)}
-                              >
-                                {p.left} {isMatched && '✓'}
-                              </div>
-                            );
-                          })}
+                          <div style={{ marginTop: '16px' }}>
+                            <label htmlFor="reasoning-input" className="field-label">
+                              Your reasoning & explanation <span className="optional">Optional</span>
+                            </label>
+                            <textarea
+                              id="reasoning-input"
+                              value={reasoningDraft}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setReasoningDraft(val);
+                                const termsText = blankMatches.length > 0
+                                  ? blankMatches.map((_, i) => `Blank ${i + 1}: ${blankInputs[i] || ''}`).join(' · ')
+                                  : '';
+                                const full = termsText ? (val.trim() ? `${termsText}\n\nReasoning: ${val}` : termsText) : val;
+                                setDraft(full);
+                              }}
+                              placeholder="Explain your thought process or why these terms fit…"
+                              rows={3}
+                              maxLength={3000}
+                              disabled={!!busy}
+                            />
+                            <div className="input-help">Reasoning helps the AI provide deeper formative feedback.</div>
+                          </div>
                         </div>
-                        <div className="matching-column">
-                          <span className="matching-column-title">OUTCOMES / DEFINITIONS</span>
-                          {s.task.matchingPairs.map((p, pIdx) => {
-                            const matchedLeftIdx = Object.entries(matches).find(([_, r]) => r === pIdx)?.[0];
-                            const isMatched = matchedLeftIdx !== undefined;
-                            return (
-                              <div
-                                key={pIdx}
-                                className={`matching-card ${isMatched ? 'matched' : ''}`}
-                                onClick={() => {
-                                  if (selectedLeft !== null) {
-                                    const newMatches = { ...matches, [selectedLeft]: pIdx };
-                                    setMatches(newMatches);
-                                    setSelectedLeft(null);
-                                    const pairsText = Object.entries(newMatches)
-                                      .map(([l, r]) => `${s.task?.matchingPairs?.[Number(l)]?.left} matches ${s.task?.matchingPairs?.[r]?.right}`)
-                                      .join('; ');
-                                    setDraft(pairsText);
-                                  }
-                                }}
+                      )}
+
+                      {/* Matching Interactive Columns */}
+                      {taskFormat === 'matching' && s.task.matchingPairs && s.task.matchingPairs.length > 0 && (
+                        <div className="interactive-matching-box">
+                          <div className="interactive-matching-grid">
+                            <div className="matching-column">
+                              <span className="matching-column-title">CONCEPTS / STEPS</span>
+                              {s.task.matchingPairs.map((p, pIdx) => {
+                                const isSelected = selectedLeft === pIdx;
+                                const isMatched = matches[pIdx] !== undefined;
+                                return (
+                                  <div
+                                    key={pIdx}
+                                    className={`matching-card ${isSelected ? 'selected' : ''} ${isMatched ? 'matched' : ''}`}
+                                    onClick={() => setSelectedLeft(pIdx)}
+                                  >
+                                    {p.left} {isMatched && '✓'}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            <div className="matching-column">
+                              <span className="matching-column-title">OUTCOMES / DEFINITIONS</span>
+                              {s.task.matchingPairs.map((p, pIdx) => {
+                                const matchedLeftIdx = Object.entries(matches).find(([_, r]) => r === pIdx)?.[0];
+                                const isMatched = matchedLeftIdx !== undefined;
+                                return (
+                                  <div
+                                    key={pIdx}
+                                    className={`matching-card ${isMatched ? 'matched' : ''}`}
+                                    onClick={() => {
+                                      if (selectedLeft !== null) {
+                                        const newMatches = { ...matches, [selectedLeft]: pIdx };
+                                        setMatches(newMatches);
+                                        setSelectedLeft(null);
+                                        const pairsText = Object.entries(newMatches)
+                                          .map(([l, r]) => `${s.task?.matchingPairs?.[Number(l)]?.left} matches ${s.task?.matchingPairs?.[r]?.right}`)
+                                          .join('; ');
+                                        setDraft(pairsText);
+                                      }
+                                    }}
+                                  >
+                                    {p.right} {isMatched && '✓'}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                          <div className="matching-status-bar">
+                            <span>Click a left card then a right card ({Object.keys(matches).length} of {s.task.matchingPairs.length} matched).</span>
+                            {Object.keys(matches).length > 0 && (
+                              <button
+                                type="button"
+                                className="text-button"
+                                onClick={() => { setMatches({}); setSelectedLeft(null); setDraft(''); }}
                               >
-                                {p.right} {isMatched && '✓'}
-                              </div>
-                            );
-                          })}
+                                Reset
+                              </button>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      <div className="matching-status-bar">
-                        <span>Click a left card then a right card ({Object.keys(matches).length} of {s.task.matchingPairs.length} matched).</span>
-                        {Object.keys(matches).length > 0 && (
-                          <button
-                            type="button"
-                            className="text-button"
-                            onClick={() => { setMatches({}); setSelectedLeft(null); setDraft(''); }}
-                          >
-                            Reset
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                      )}
 
-                  {/* Single Accessible Textarea for Response and Synced Inputs */}
-                  <div style={{ marginTop: '14px' }}>
-                    <label htmlFor="response" className="field-label">Your thinking</label>
-                    <textarea
-                      id="response"
-                      value={draft}
-                      onChange={e => setDraft(e.target.value)}
-                      placeholder={selectedFormat === 'frq' ? 'Work through the idea in your own words…' : 'Selected response or additional reasoning…'}
-                      rows={selectedFormat === 'frq' ? 6 : 3}
-                      maxLength={4000}
-                      disabled={!!busy}
-                    />
-                    <div className="input-help">{draft.length}/4,000 characters · Reasoning matters more than length.</div>
-                  </div>
+                      {/* Single Accessible Textarea for Response (FRQ & MCQ) */}
+                      {taskFormat !== 'fill-blank' && (
+                        <div style={{ marginTop: '14px' }}>
+                          <label htmlFor="response" className="field-label">Your thinking</label>
+                          <textarea
+                            id="response"
+                            value={draft}
+                            onChange={e => setDraft(e.target.value)}
+                            placeholder={
+                              taskFormat === 'mcq'
+                                ? 'Selected option or additional reasoning…'
+                                : 'Work through the idea in your own words…'
+                            }
+                            rows={taskFormat === 'mcq' ? 3 : 5}
+                            maxLength={4000}
+                            disabled={!!busy}
+                          />
+                          <div className="input-help">{draft.length}/4,000 characters · Reasoning matters more than length.</div>
+                        </div>
+                      )}
 
-                  <div className="action-row">
-                    <button className="button ghost" disabled={!!busy || !!s.task.hint} onClick={() => request('hint')}>
-                      <Lightbulb size={17}/> {s.task.hint ? 'Hint opened' : 'A little hint'}
-                    </button>
-                    <button
-                      className="button primary"
-                      disabled={!!busy || draft.trim().length < 8}
-                      onClick={() => request('answer', { answer: draft })}
-                    >
-                      {retry ? 'Submit revision' : 'Get feedback'} <ArrowRight size={17}/>
-                    </button>
-                  </div>
-                </>
+                      <div className="action-row">
+                        <button className="button ghost" disabled={!!busy || !!s.task.hint} onClick={() => request('hint')}>
+                          <Lightbulb size={17}/> {s.task.hint ? 'Hint opened' : 'A little hint'}
+                        </button>
+                        <button
+                          className="button primary"
+                          disabled={
+                            !!busy ||
+                            (taskFormat === 'fill-blank' && blankMatches.length > 0
+                              ? blankMatches.some((_, i) => !(blankInputs[i] || '').trim())
+                              : draft.trim().length < 8)
+                          }
+                          onClick={() => request('answer', { answer: draft })}
+                        >
+                          {retry ? 'Submit revision' : 'Get feedback'} <ArrowRight size={17}/>
+                        </button>
+                      </div>
+                    </>
+                  );
+                })()
               ) : (
                 <div className="submitted-answer">
                   <span className="eyebrow">YOUR RESPONSE</span>
@@ -574,7 +696,7 @@ export default function Home() {
             <Review result={s.final} session={s}/>
           </>}
         </>}
-        <footer className="main-footer"><span><Flower2 size={13}/> BLOOM</span><span>Small steps. Deeper understanding.</span></footer>
+        <footer className="main-footer"><span><Flower2 size={13}/> BLOOMS</span><span>Small steps. Deeper understanding.</span></footer>
       </main>
     </div>
     {confirmClear && <div className="modal-backdrop"><section className="modal card" role="dialog" aria-modal="true" aria-labelledby="clear-title" onKeyDown={e => { if (e.key === 'Escape') setConfirmClear(false); if (e.key === 'Tab') { const buttons = e.currentTarget.querySelectorAll('button'); if (e.shiftKey && document.activeElement === buttons[0]) { e.preventDefault(); buttons[1].focus(); } else if (!e.shiftKey && document.activeElement === buttons[1]) { e.preventDefault(); buttons[0].focus(); } } }}><span className="soft-icon"><Trash2 size={22}/></span><h2 id="clear-title">Make space for a new session?</h2><p>This clears your saved session, responses, and materials from this browser. It cannot be undone. It does not delete data already sent to Gemini.</p><div className="action-row"><button autoFocus className="button secondary" onClick={() => setConfirmClear(false)}>Keep studying</button><button className="button primary" onClick={clear}>Clear saved data</button></div></section></div>}
@@ -636,7 +758,7 @@ function HomePageView({ onStartSession }: { onStartSession: () => void }) {
         <span className="kicker"><Leaf size={14}/> COGNITIVE MASTERY FOR LIFELONG LEARNERS</span>
         <h1>A little understanding,<br/><em>every day.</em></h1>
         <p>
-          Passive reading and cramming create the illusion of competence. Bloom transforms your study notes, syllabi,
+          Passive reading and cramming create the illusion of competence. Blooms transforms your study notes, syllabi,
           and textbooks into an active, scaffolded cognitive journey designed for genuine long-term retention.
         </p>
         <div className="home-hero-actions">
@@ -670,13 +792,13 @@ function HomePageView({ onStartSession }: { onStartSession: () => void }) {
       </section>
 
       <section className="home-journey-section">
-        <h2>How Bloom Works in Practice</h2>
+        <h2>How Blooms Works in Practice</h2>
         <p>A structured 4-step learning cycle tailored to your course materials.</p>
         <div className="home-journey-steps">
           <div className="home-journey-step">
             <span className="home-step-tag">STEP 01</span>
             <h4>Diagnostic Entry Check</h4>
-            <p>Start with a focused 6-question MCQ baseline. Bloom analyzes your strengths and pinpoints exactly which ideas need deep attention.</p>
+            <p>Start with a focused 6-question MCQ baseline. Blooms analyzes your strengths and pinpoints exactly which ideas need deep attention.</p>
           </div>
           <div className="home-journey-step">
             <span className="home-step-tag">STEP 02</span>

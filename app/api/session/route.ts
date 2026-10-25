@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     if (size > 31 * 1024 * 1024) throw new AppError('Upload exceeds the 30 MB request limit.', 413);
     rateLimit(request);
     if (request.headers.get('content-type')?.includes('multipart/form-data')) {
-      if (!process.env.GEMINI_API_KEY) throw new AppError('Gemini is not configured on this server. Try the CS demo, or add GEMINI_API_KEY to .env.local and restart.', 503);
+      if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY.includes('YOUR_GEMINI_API_KEY_HERE')) throw new AppError('Gemini is not configured on this server. Try the CS demo, or add your GEMINI_API_KEY to .env.local and restart.', 503);
       const form = await request.formData();
       if (form.get('consent') !== 'yes') throw new AppError('Please acknowledge that your materials will be sent to Gemini.');
       const subject = z.string().trim().min(2).max(120).parse(form.get('subject'));
