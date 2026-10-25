@@ -24,7 +24,15 @@ test('complete CS demo: diagnose, resume, hint, retry, six levels, compare, clea
       await page.getByRole('button', { name: 'A little hint' }).click();
       await expect(page.locator('.hint-box')).toBeVisible();
     }
-    await page.getByLabel('Your thinking').fill('The data must be sorted. Binary search halves the interval, giving O(log n) time. Use low = mid + 1 for progress.');
+    const demoAnswers = [
+      'The data must be sorted. Binary search halves the interval, giving O(log n) time. Use low = mid + 1 for progress.',
+      'Binary search uses sorted order to discard half of the remaining candidates at each step.',
+      '12 and 22 collide in bucket 2, while 35 maps to bucket 5.',
+      'Arrays provide O(1) constant time indexed access, while linked lists require O(n) linear traversal to follow links.',
+      'Big O describes asymptotic growth, not always exact runtime. Small input sizes and constants can make O(n^2) faster.',
+      'Set low and high bounds, update with mid + 1 or mid - 1, and stop when low <= high is empty or not found.'
+    ];
+    await page.getByLabel('Your thinking').fill(demoAnswers[i]);
     await page.getByRole('button', { name: 'Get feedback' }).click();
     await expect(page.getByRole('heading', { name: 'Demo feedback · keyword-based' })).toBeVisible();
     if (i === 0) {

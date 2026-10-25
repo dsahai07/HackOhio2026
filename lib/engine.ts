@@ -192,9 +192,26 @@ const patterns: Record<string, RegExp[][]> = {
   complexity: [[/O\(n\)|linear/i, /n[²^]|quadratic/i], [/add|n\s*\+\s*n|2n/i, /constant|factor|O\(n\)/i], [/5\s*\*?\s*n|n\s*\*\s*5/i, /O\(n\)|linear/i], [/O\(n\)|linear/i, /log|doubl/i], [/asymptot|growth|not.*always/i, /constant|small|input/i], [/set|insert|seen/i, /space|memory|tradeoff|O\(n\)/i]],
 };
 export function demoFeedback(task: Task, answer: string): Feedback {
-  const checks = patterns[task.topicId][levels.indexOf(task.level)];
-  const criteria = task.rubric.map((criterion, i) => ({ criterion, met: checks[i].test(answer), feedback: checks[i].test(answer) ? 'The expected idea was detected in your response.' : 'This idea was not detected. Compare your reasoning with the worked example.' }));
-  return { score: Math.round(criteria.filter(c => c.met).length / criteria.length * 100), summary: 'Demo feedback uses simple keyword checks, not Gemini. It may miss valid wording or accept incorrect reasoning; use the rubric and example to self-check.', criteria, nextStep: 'Revise any missing idea in your own words, then continue when you are ready.' };
+  const checks = patterns[task.topicId]?.[levels.indexOf(task.level)] || [/./i, /./i];
+  const ans = answer.toLowerCase().trim();
+  const model = task.modelAnswer.toLowerCase();
+  const criteria = task.rubric.map((criterion, i) => {
+    const patternMet = checks[i] ? checks[i].test(answer) : false;
+    const modelWords = model.split(/[ ,.;:]+/).filter(w => w.length >= 4);
+    const modelMet = modelWords.length > 0 && modelWords.filter(w => ans.includes(w)).length >= 2;
+    const met = patternMet || modelMet;
+    return {
+      criterion,
+      met,
+      feedback: met ? 'The expected idea was accurately detected in your response.' : 'This idea was not detected. Compare your reasoning with the worked example and revise.'
+    };
+  });
+  return {
+    score: Math.round(criteria.filter(c => c.met).length / criteria.length * 100),
+    summary: 'Demo feedback uses simple keyword checks, not Gemini. It may miss valid wording or accept incorrect reasoning; use the rubric and example to self-check.',
+    criteria,
+    nextStep: 'Revise any missing idea in your own words, then continue when you are ready.'
+  };
 }
 
 export function isTaskMastered(feedback?: Feedback): boolean {

@@ -8,10 +8,10 @@ export const demoSources: Source[] = [
 ];
 const cite = (page: number) => [{ sourceId: `demo-${page}`, quote: demoSources[page - 1].text.split('. ')[0] }];
 const topics = [
-  { id: 'structures', name: 'Data structures', objective: 'Choose a structure based on access and ordering needs.', weight: 17, citations: cite(1) },
-  { id: 'binary', name: 'Binary search', objective: 'Trace a shrinking search interval and reason about boundaries.', weight: 33, citations: cite(2) },
-  { id: 'hash', name: 'Hash tables', objective: 'Explain collisions and distinguish expected from worst-case lookup.', weight: 33, citations: cite(3) },
-  { id: 'complexity', name: 'Algorithm complexity', objective: 'Compare growth rates and time–space tradeoffs.', weight: 17, citations: cite(4) },
+  { id: 'structures', name: 'Data structures', objective: 'Choose a structure based on access and ordering needs.', weight: 17, citations: cite(1), lectureOrder: 1, lectureTag: 'Lecture 01 · Primitives' },
+  { id: 'binary', name: 'Binary search', objective: 'Trace a shrinking search interval and reason about boundaries.', weight: 33, citations: cite(2), lectureOrder: 2, lectureTag: 'Lecture 02 · Search' },
+  { id: 'hash', name: 'Hash tables', objective: 'Explain collisions and distinguish expected from worst-case lookup.', weight: 33, citations: cite(3), lectureOrder: 3, lectureTag: 'Lecture 03 · Hashing' },
+  { id: 'complexity', name: 'Algorithm complexity', objective: 'Compare growth rates and time–space tradeoffs.', weight: 17, citations: cite(4), lectureOrder: 4, lectureTag: 'Lecture 04 · Analysis' },
 ];
 function q(id: string, topicId: string, prompt: string, options: string[], answer: number, explanation: string, page: number) {
   return { id, topicId, prompt, options, answer, explanation, difficulty: 'Intermediate' as const, citations: cite(page) };
@@ -63,12 +63,243 @@ const banks: Record<string, { teaching: string; prompts: string[]; answers: stri
     rubrics: [['Identifies linear cost', 'Identifies quadratic nested cost'], ['Adds rather than multiplies', 'Drops constant factor'], ['Counts 5n operations', 'Simplifies to O(n)'], ['Explains incremental linear growth', 'Explains doubling logarithmic growth'], ['Distinguishes growth from exact runtime', 'Mentions constants or input size'], ['Checks and inserts into a set', 'Explains time–space tradeoff']], hint: 'Count total operations first, then keep the fastest-growing term and drop constant factors.', page: 4,
   },
 };
+const formatOptions: Record<string, {
+  mcqOptions: string[][];
+  blankTemplates: string[];
+  matchingPairs: { left: string; right: string }[][];
+}> = {
+  binary: {
+    mcqOptions: [
+      ['The data must be sorted; running time is O(log n)', 'The data can be unsorted; running time is O(n)', 'The data must be a linked list; running time is O(1)', 'The data must contain unique powers of two; running time is O(n²)'],
+      ['Sorted order allows eliminating half the elements each step', 'All elements must be powers of two', 'Binary search tests every index in linear sequence', 'Hash values must match bucket indexes'],
+      ['Floor((low + high) / 2) determines the midpoint', 'Index values are multiplied together', 'The target is inserted into a new bucket', 'Linear scan checks low and high simultaneously'],
+      ['Linear search is O(n) without sorted order; binary search needs sorted order and halves intervals in O(log n)', 'Linear search is always faster than binary search', 'Both algorithms require strictly sorted inputs', 'Binary search uses O(n) extra space per comparison'],
+      ['low = mid risks infinite loop; use low = mid + 1 to guarantee progress', 'low = mid is always optimal and terminates fastest', 'high should be set to 0 instead of updating low', 'The loop should terminate without inspecting the target'],
+      ['Set low = 0, high = len - 1, compare midpoint, and update bounds', 'Scan from low to high one index at a time', 'Compute hash of book ID and check bucket 0', 'Pop book IDs from a LIFO stack until empty']
+    ],
+    blankTemplates: [
+      'Binary search requires that the input array be [sorted] and executes with [O(log n)] time complexity.',
+      'Because elements are sorted, comparing against the midpoint eliminates [half] of the remaining search interval.',
+      'When searching for 23, the first midpoint evaluated is value [12], which moves the lower bound to index [4].',
+      'While linear search runs in O(n) time, binary search achieves logarithmic growth of [O(log n)].',
+      'To prevent non-termination when target > mid, the lower bound must advance to [mid + 1].',
+      'A complete binary search terminates when low is [greater than] high and the target has not been found.'
+    ],
+    matchingPairs: [
+      [
+        { left: 'Sorted Order', right: 'Prerequisite for halving interval' },
+        { left: 'O(log n)', right: 'Logarithmic running time' },
+        { left: 'Midpoint Comparison', right: 'Eliminates half of values' }
+      ],
+      [
+        { left: 'Ascending Order', right: 'Values left of mid are smaller' },
+        { left: 'Discarding Half', right: 'Preserves potential matches' },
+        { left: 'Halving Steps', right: 'Interval size drops from n to n/2' }
+      ],
+      [
+        { left: 'Step 1: Check Index 3', right: 'Value is 12 (less than 23)' },
+        { left: 'Lower Bound Update', right: 'Advance low to index 4' },
+        { left: 'Step 2: Check Index 5', right: 'Value is 23: target found!' }
+      ],
+      [
+        { left: 'Linear Search', right: 'O(n) time on unsorted data' },
+        { left: 'Binary Search', right: 'O(log n) time on sorted data' },
+        { left: 'Interval Halving', right: 'Scales to massive collections' }
+      ],
+      [
+        { left: 'Buggy Update', right: 'low = mid may loop infinitely' },
+        { left: 'Corrected Update', right: 'low = mid + 1 guarantees progress' },
+        { left: 'Invariant', right: 'Interval strictly shrinks each loop' }
+      ],
+      [
+        { left: 'Initial State', right: 'low = 0, high = length - 1' },
+        { left: 'Loop Condition', right: 'While low <= high' },
+        { left: 'Midpoint Test', right: 'mid = floor((low + high) / 2)' }
+      ]
+    ]
+  },
+  hash: {
+    mcqOptions: [
+      ['Expected O(1) lookup, worst-case O(n) lookup', 'Always O(log n) lookup', 'Expected O(n) lookup, worst-case O(1) lookup', 'Always O(n²) lookup'],
+      ['A collision puts distinct keys in the same bucket; chaining stores them in that bucket', 'A collision occurs when keys are sorted into ascending order', 'A collision forces the table to delete all entries', 'A collision requires recreating the hash function'],
+      ['Keys 12 and 22 map to bucket 2 and collide; 35 maps to bucket 5', 'All three keys map to bucket 0', '12 maps to 1, 22 maps to 2, 35 maps to 3', 'Key 35 cannot be hashed'],
+      ['Hash table gives expected O(1) lookup; sorted array supports O(log n) binary search', 'Sorted arrays give O(1) expected lookup', 'Hash tables require sorted keys', 'Both require linear scan for every query'],
+      ['False: extreme collisions can degrade chain lookup to O(n)', 'True: hash tables mathematically guarantee O(1) in all cases', 'False: lookup is always O(n²)', 'True: chaining eliminates worst-case time entirely'],
+      ['Increment key count in map or initialize to 1; expected O(n) time', 'Sort words first in O(n log n) then scan', 'Store all words in a single bucket', 'Rehash after every individual word']
+    ],
+    blankTemplates: [
+      'A hash table achieves expected [O(1)] lookup time, but worst-case lookup can degrade to [O(n)].',
+      'When two distinct keys produce the same hash bucket, a [collision] occurs, resolved by [chaining].',
+      'With h(k) = k mod 10, keys 12 and 22 both map to bucket [2] and collide.',
+      'Unlike a sorted array requiring O(log n) time, a hash table offers expected [O(1)] time.',
+      'The claim of guaranteed O(1) is false because if all keys hash to one bucket, searching takes [O(n)].',
+      'For counting word frequencies, an entry is initialized to 1 or incremented, yielding expected [O(n)] time.'
+    ],
+    matchingPairs: [
+      [
+        { left: 'Expected Lookup', right: 'O(1) constant time with uniform hash' },
+        { left: 'Worst-Case Lookup', right: 'O(n) linear time when all collide' },
+        { left: 'Hash Function', right: 'Maps keys to bucket locations' }
+      ],
+      [
+        { left: 'Collision Event', right: 'Two distinct keys mapping to same bucket' },
+        { left: 'Chaining Technique', right: 'Stores colliding entries in bucket list' },
+        { left: 'Load Factor', right: 'Ratio of stored items to bucket count' }
+      ],
+      [
+        { left: '12 mod 10 & 22 mod 10', right: 'Both equal bucket 2 (collision)' },
+        { left: '35 mod 10', right: 'Maps to bucket 5' },
+        { left: 'Bucket 2 Resolution', right: 'Contains both keys 12 and 22' }
+      ],
+      [
+        { left: 'Hash Table', right: 'Expected O(1), no sorting required' },
+        { left: 'Sorted Array', right: 'O(log n) lookup, requires sorted keys' },
+        { left: 'Collision Degradation', right: 'Hash table degrades to O(n) in worst case' }
+      ],
+      [
+        { left: 'Unconditional O(1) claim', right: 'False: subject to worst-case collisions' },
+        { left: 'Counterexample', right: 'All n keys hashing to identical bucket' },
+        { left: 'Resolution Strategy', right: 'Resize table and rehash entries' }
+      ],
+      [
+        { left: 'New Word', right: 'Initialize map entry with count = 1' },
+        { left: 'Existing Word', right: 'Increment entry count by 1' },
+        { left: 'Complexity', right: 'Expected O(n) total time and O(k) space' }
+      ]
+    ]
+  },
+  structures: {
+    mcqOptions: [
+      ['Stack uses LIFO (last in first out); Queue uses FIFO (first in first out)', 'Stack uses FIFO; Queue uses LIFO', 'Both Stack and Queue use LIFO', 'Array uses FIFO; Linked List uses LIFO'],
+      ['A queue serves the earliest arrival first, preserving arrival order', 'A queue sorts requests by user priority', 'A queue reverses the order of tickets', 'A queue performs O(1) random access'],
+      ['C is popped first, then B; A remains on the stack', 'A is popped first, then B; C remains', 'All three items are removed together', 'B is popped first, then C; A remains'],
+      ['Arrays compute index address in O(1); linked lists traverse nodes in O(n)', 'Linked lists provide O(1) random indexing', 'Arrays require O(n) traversal for indexing', 'Both provide identical O(1) index performance'],
+      ['A stack serves newest arrivals first; a FIFO queue is fair for waiting lines', 'A stack is fair because it operates in LIFO order', 'A hash table is required for any waiting line', 'Queues cause indefinite delays for all arrivals'],
+      ['Push actions and inverse onto stack; undo pops newest and reverses it', 'Use a queue to undo oldest actions first', 'Store all actions in an unsorted array', 'Delete history on every action']
+    ],
+    blankTemplates: [
+      'A stack operates on a [LIFO] discipline, whereas a queue operates on a [FIFO] discipline.',
+      'A queue is ideal for a help desk because dequeueing removes the [earliest] arrival first.',
+      'After pushing A, then B, then C onto a stack, popping twice removes [C then B], leaving [A].',
+      'Direct index access takes [O(1)] time in an array, but takes [O(n)] time in a linked list.',
+      'Using a stack for a line is unfair because the [newest] arrival is served first; use a [queue].',
+      'An undo mechanism naturally fits a [stack] because the newest edit is reversed first.'
+    ],
+    matchingPairs: [
+      [
+        { left: 'Stack Discipline', right: 'LIFO: Last In, First Out' },
+        { left: 'Queue Discipline', right: 'FIFO: First In, First Out' },
+        { left: 'Stack Operations', right: 'Push and Pop' }
+      ],
+      [
+        { left: 'Enqueue', right: 'Add to tail of queue' },
+        { left: 'Dequeue', right: 'Remove earliest arrival from head' },
+        { left: 'Order Preservation', right: 'First-come, first-served guarantee' }
+      ],
+      [
+        { left: 'Top of Stack', right: 'Item C after pushing A, B, C' },
+        { left: 'First Pop', right: 'Removes item C' },
+        { left: 'Second Pop', right: 'Removes item B (leaving A)' }
+      ],
+      [
+        { left: 'Array Indexing', right: 'O(1) direct address arithmetic' },
+        { left: 'Linked List Indexing', right: 'O(n) sequential pointer traversal' },
+        { left: 'Node Insertion', right: 'O(1) at known pointer' }
+      ],
+      [
+        { left: 'Stack in Waiting Line', right: 'Unfair: newest arrival served first' },
+        { left: 'Queue in Waiting Line', right: 'Fair: preserves chronological order' },
+        { left: 'Starvation Risk', right: 'Older arrivals wait indefinitely in stack' }
+      ],
+      [
+        { left: 'Perform Edit', right: 'Push action and inverse onto undo stack' },
+        { left: 'Undo Request', right: 'Pop topmost action and execute inverse' },
+        { left: 'Undo Order', right: 'Last-in, first-out reversal' }
+      ]
+    ]
+  },
+  complexity: {
+    mcqOptions: [
+      ['Single loop is O(n); independent nested loops are O(n²)', 'Single loop is O(1); nested loops are O(n)', 'Single loop is O(n²); nested loops are O(n³)', 'Both take O(n log n) time'],
+      ['Sequential loops add operations (n + n = 2n), which simplifies to O(n)', 'Sequential loops multiply operations (n × n = n²)', 'Sequential loops run simultaneously in O(1)', 'Constants are never dropped in asymptotic analysis'],
+      ['5n total operations, which simplifies to O(n) because 5 is constant', '5n operations simplifies to O(n²)', 'The inner loop makes it O(log n)', 'The runtime is O(5ⁿ)'],
+      ['Doubling index reaches n in O(log n) steps; incrementing takes O(n) steps', 'Doubling index takes O(n²) steps', 'Incrementing index is always logarithmic', 'Both require identical numbers of iterations'],
+      ['Big O describes asymptotic growth for large n; constants and small n can make O(n²) faster', 'O(n) is guaranteed faster for all possible inputs', 'Asymptotic bounds determine exact nanosecond timings', 'Input size has no impact on algorithm performance'],
+      ['Hash set yields expected O(n) time and O(n) space; pairs comparison takes O(n²) with O(1) space', 'Both approaches take O(n log n) time and O(1) space', 'Hash set takes O(n²) time', 'Pair comparisons take O(1) time']
+    ],
+    blankTemplates: [
+      'A single n-iteration loop runs in [O(n)] time, while two nested loops run in [O(n²)] time.',
+      'Two consecutive loops execute n + n = 2n operations, simplifying to [O(n)] by dropping constants.',
+      'An outer loop of n steps and an inner loop of 5 steps performs 5n operations, order [O(n)].',
+      'An index that doubles at each step reaches n in [O(log n)] steps, whereas incrementing takes [O(n)].',
+      'Big O characterizes [asymptotic] growth, meaning for small inputs an O(n²) code might be [faster].',
+      'Using a hash set to detect duplicates trades [O(n) extra memory] for [O(n) expected time].'
+    ],
+    matchingPairs: [
+      [
+        { left: 'Single Loop', right: 'O(n) linear growth' },
+        { left: 'Two Nested Loops', right: 'O(n²) quadratic growth' },
+        { left: 'Big O Definition', right: 'Asymptotic upper bound ignoring constants' }
+      ],
+      [
+        { left: 'Consecutive Loops', right: 'Costs add: n + n = 2n' },
+        { left: 'Nested Loops', right: 'Costs multiply: n × n = n²' },
+        { left: 'Dropping Constants', right: '2n simplifies to O(n)' }
+      ],
+      [
+        { left: 'Outer Loop: n', right: 'Runs n iterations' },
+        { left: 'Inner Loop: 5', right: 'Runs constant 5 iterations' },
+        { left: 'Total Operations', right: '5n operations = O(n) linear' }
+      ],
+      [
+        { left: 'Incrementing (i++)', right: 'Takes n steps (linear growth)' },
+        { left: 'Doubling (i *= 2)', right: 'Takes log₂ n steps (logarithmic growth)' },
+        { left: 'Exponential Leap', right: 'Multiplicative leaps cut step count' }
+      ],
+      [
+        { left: 'Asymptotic Growth', right: 'Describes scaling behavior for large n' },
+        { left: 'Constant Factors', right: 'Can dominate runtime on small inputs' },
+        { left: 'Empirical Tuning', right: 'Simpler code may win when n is small' }
+      ],
+      [
+        { left: 'Brute Force Duplicate Check', right: 'O(n²) time with O(1) auxiliary space' },
+        { left: 'Hash Set Duplicate Check', right: 'Expected O(n) time with O(n) space' },
+        { left: 'Space-Time Tradeoff', right: 'Consuming memory to accelerate computation' }
+      ]
+    ]
+  }
+};
+
+const defaultFormats: ('mcq' | 'fill-blank' | 'matching' | 'mcq' | 'frq' | 'frq')[] = [
+  'mcq',
+  'fill-blank',
+  'matching',
+  'mcq',
+  'frq',
+  'frq'
+];
+
 export function demoTasks(priorities: string[]): Task[] {
   // The weakest topic receives three levels; each other CS topic receives one.
   const order = [0, 0, 1, 2, 3, 0];
   return levels.map((level, i) => {
     const topicId = priorities[order[i]] ?? priorities[0];
     const bank = banks[topicId];
-    return { id: `task-${i}`, topicId, level, teaching: bank.teaching, prompt: bank.prompts[i], hint: bank.hint, modelAnswer: bank.answers[i], rubric: bank.rubrics[i], citations: cite(bank.page) };
+    const fmt = formatOptions[topicId] || formatOptions.binary;
+    return {
+      id: `task-${i}`,
+      topicId,
+      level,
+      format: defaultFormats[i],
+      teaching: bank.teaching,
+      prompt: bank.prompts[i],
+      hint: bank.hint,
+      modelAnswer: bank.answers[i],
+      rubric: bank.rubrics[i],
+      citations: cite(bank.page),
+      mcqOptions: fmt.mcqOptions[i],
+      blankTemplate: fmt.blankTemplates[i],
+      matchingPairs: fmt.matchingPairs[i]
+    };
   });
 }

@@ -82,3 +82,157 @@ input::placeholder,textarea::placeholder{color:#6c7860}.muted{color:#65745b}.dem
   .bloom-intro-card{padding:18px}
   .bloom-intro-header h2{font-size:20px}
 }
+
+/* 1. Navigation Bar & Multi-Page Views */
+.nav-links{display:flex;align-items:center;gap:6px;margin:0 18px}
+.nav-tab{background:transparent;border:none;color:#5e6d55;font-size:13px;font-weight:600;padding:7px 14px;border-radius:20px;cursor:pointer;transition:all .15s ease;display:inline-flex;align-items:center;gap:6px}
+.nav-tab:hover{background:#eff3eb;color:#283c30}
+.nav-tab.active{background:#315c45;color:#ffffff;box-shadow:0 2px 8px #315c4525}
+.nav-badge{font-size:9px;background:#e2ebdc;color:#355a29;padding:2px 7px;border-radius:10px;font-weight:700}
+.nav-tab.active .nav-badge{background:#ffffff30;color:#ffffff}
+
+/* 2. Home Landing Page */
+.home-landing-page{display:flex;flex-direction:column;gap:36px;padding:12px 0 40px}
+.home-hero{background:linear-gradient(135deg,#fcfdf9 0%,#f4f8ed 100%);border:1px solid #dbe4d2;border-radius:var(--radius);padding:44px 38px;box-shadow:0 6px 24px #2b452808;text-align:center;display:flex;flex-direction:column;align-items:center}
+.home-hero .kicker{margin-bottom:12px}
+.home-hero h1{font-size:42px;line-height:1.2;letter-spacing:-1.2px;max-width:760px;margin-bottom:16px}
+.home-hero h1 em{font-family:Georgia,serif;font-weight:400;color:#5a7b4f}
+.home-hero p{font-size:16px;line-height:1.7;color:#5d6d53;max-width:680px;margin-bottom:28px}
+.home-hero-actions{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.home-pillars{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.home-pillar-card{background:#ffffff;border:1px solid #e1e8d9;border-radius:14px;padding:24px;display:flex;flex-direction:column;gap:10px;transition:transform .15s,box-shadow .15s}
+.home-pillar-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px #315c4510}
+.pillar-icon-box{width:42px;height:42px;border-radius:10px;background:#edf3e6;display:flex;align-items:center;justify-content:center;color:#315c45}
+.home-pillar-card h3{font-size:16px;font-weight:750;color:#283c30}
+.home-pillar-card p{font-size:12px;line-height:1.6;color:#67775f}
+.home-journey-section{background:#ffffff;border:1px solid #e1e8d9;border-radius:var(--radius);padding:32px}
+.home-journey-section h2{font-size:24px;color:#283c30;margin-bottom:8px}
+.home-journey-section>p{font-size:13px;color:#687760;margin-bottom:24px}
+.home-journey-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.home-journey-step{background:#f9fbf7;border:1px solid #e5ebd9;border-radius:12px;padding:20px;position:relative}
+.home-step-tag{font-size:10px;font-weight:800;color:#78916a;background:#edf3e6;padding:3px 8px;border-radius:8px;display:inline-block;margin-bottom:10px}
+.home-journey-step h4{font-size:15px;font-weight:700;color:#283c30;margin-bottom:6px}
+.home-journey-step p{font-size:12px;color:#6b7c62;line-height:1.6}
+
+/* 3. Bloom's Taxonomy Dedicated Page */
+.taxonomy-page{display:flex;flex-direction:column;gap:32px;padding:12px 0 40px}
+.taxonomy-hero-card{background:linear-gradient(135deg,#fcfdf9 0%,#f4f8ed 100%);border:1px solid #dbe4d2;border-radius:var(--radius);padding:36px;box-shadow:0 6px 20px #2b452806}
+.taxonomy-hero-card h1{font-size:36px;line-height:1.2;letter-spacing:-1px;margin:10px 0}
+.taxonomy-hero-card h1 em{font-family:Georgia,serif;font-weight:400;color:#5a7b4f}
+.taxonomy-hero-card p{font-size:14px;line-height:1.7;color:#5d6d53;max-width:820px}
+.pyramid-diagram{display:flex;flex-direction:column;gap:14px;margin-top:20px}
+.pyramid-tier{background:#ffffff;border:1px solid #dce4d3;border-radius:12px;padding:20px 24px;display:grid;grid-template-columns:180px 1fr 240px;align-items:center;gap:20px;transition:all .15s}
+.pyramid-tier:hover{box-shadow:0 6px 18px #315c4510;border-color:#b5caa6}
+.tier-badge-col{display:flex;align-items:center;gap:12px}
+.tier-level-num{font-size:11px;font-weight:800;background:#edf3e6;color:#4a683e;padding:4px 9px;border-radius:8px}
+.tier-name{font-size:16px;font-weight:750;color:#283c30}
+.tier-desc-col h4{font-size:13px;font-weight:700;color:#35532b;margin-bottom:4px}
+.tier-desc-col p{font-size:12px;color:#67775f;line-height:1.6}
+.tier-action-col{background:#f8faf5;border:1px solid #e7ede0;border-radius:8px;padding:10px 14px}
+.tier-action-col strong{display:block;font-size:10px;font-weight:750;color:#4f6443;letter-spacing:.5px;margin-bottom:4px}
+.tier-verbs{font-size:11px;color:#6e7d66;line-height:1.5}
+.taxonomy-science-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+.science-card{background:#ffffff;border:1px solid #e1e8d9;border-radius:14px;padding:26px}
+.science-card h3{font-size:17px;font-weight:750;color:#283c30;margin-bottom:10px;display:flex;align-items:center;gap:10px}
+.science-card p{font-size:13px;line-height:1.7;color:#66765e}
+
+/* 4. Sequential Topic Learning Map (Lecture Order) */
+.lecture-map-container{background:#ffffff;border:1px solid #e0e7d8;border-radius:var(--radius);padding:24px;margin-bottom:24px}
+.lecture-map-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+.lecture-map-header h3{font-size:16px;font-weight:750;color:#283c30;display:flex;align-items:center;gap:8px}
+.single-topic-banner{background:#f3f7ee;border:1px solid #d4dfc9;border-radius:8px;padding:10px 14px;font-size:11px;color:#456038;display:flex;align-items:center;gap:8px;margin-bottom:18px}
+.lecture-timeline{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;position:relative}
+.lecture-node{background:#fafcf8;border:1px solid #e2e8da;border-radius:12px;padding:16px;display:flex;flex-direction:column;justify-content:space-between;gap:10px;position:relative}
+.lecture-node.active{border-color:var(--green);background:#fbfdf9;box-shadow:0 0 0 2px #315c4525}
+.lecture-node.completed{background:#f2f7ed;border-color:#c8d8bf}
+.lecture-node.locked{opacity:0.65;background:#f8f9f6}
+.lecture-node-top{display:flex;justify-content:space-between;align-items:center}
+.lecture-order-pill{font-size:9px;font-weight:800;letter-spacing:1px;background:#e9f0e2;color:#506a44;padding:3px 7px;border-radius:6px}
+.lecture-status-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px}
+.badge-active{background:#315c45;color:white}
+.badge-completed{background:#d5e7cb;color:#2b5020}
+.badge-locked{background:#e7ece0;color:#78866e}
+.lecture-node h4{font-size:14px;font-weight:750;color:#283c30}
+.lecture-node p{font-size:11px;color:#6f7f67;line-height:1.5}
+.lecture-weight{font-size:10px;font-weight:700;color:#809472}
+
+/* 5. Gamification & Numerical Indicators */
+.overall-progress-strip{background:#ffffff;border:1px solid #e1e7da;border-radius:12px;padding:14px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.progress-strip-left{display:flex;align-items:center;gap:14px;flex:1;min-width:240px}
+.progress-strip-label{font-size:12px;font-weight:700;color:#283c30;white-space:nowrap}
+.overall-meter-track{flex:1;height:8px;background:#eef3e8;border-radius:4px;overflow:hidden;position:relative}
+.overall-meter-fill{height:100%;background:linear-gradient(90deg,#4d7b57 0%,#2d573d 100%);border-radius:4px;transition:width .4s ease}
+.overall-percent-num{font-size:12px;font-weight:800;color:#315c45;min-width:38px}
+.progress-strip-stats{display:flex;align-items:center;gap:10px}
+.gamification-stat{background:#f4f7ee;border:1px solid #e2ebd8;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;color:#3b5630;display:inline-flex;align-items:center;gap:5px}
+.streak-stat{background:#fff6e8;border-color:#fce4bd;color:#8f5e13}
+.xp-stat{background:#f1f7ec;border-color:#d7e6cc;color:#2e5924}
+
+/* 6. Assessment Lifecycle Tracker */
+.assessment-lifecycle-tracker{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px}
+.lifecycle-step-card{background:#ffffff;border:1px solid #e2e8da;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.lifecycle-step-card.active{border-color:var(--green);background:#fbfdf9;box-shadow:0 0 0 2px #315c4518}
+.lifecycle-step-card.completed{background:#f3f7ee;border-color:#cbd7c2}
+.lifecycle-step-num{font-size:9px;font-weight:800;color:#788f6b;text-transform:uppercase;letter-spacing:.8px}
+.lifecycle-step-name{font-size:12px;font-weight:750;color:#283c30}
+.lifecycle-step-type{font-size:10px;color:#718267}
+
+/* 7. Diverse Question Formats Switcher & Containers */
+.format-switcher-row{display:flex;justify-content:space-between;align-items:center;margin:16px 0 12px;padding-top:14px;border-top:1px dashed #e4ebd9;flex-wrap:wrap;gap:10px}
+.format-switcher-row span{font-size:11px;font-weight:700;color:#67795d}
+.format-pills{display:flex;gap:6px;flex-wrap:wrap}
+.format-pill{background:#f4f7ef;border:1px solid #dde5d4;color:#54664a;font-size:11px;font-weight:700;padding:4px 10px;border-radius:16px;cursor:pointer;transition:all .15s ease}
+.format-pill:hover{background:#e7efe0;color:#283c30}
+.format-pill.active{background:#315c45;color:#ffffff;border-color:#315c45}
+
+/* MCQ Format */
+.interactive-mcq-grid{display:grid;grid-template-columns:1fr;gap:8px;margin-top:12px}
+.interactive-mcq-option{background:#ffffff;border:1.5px solid #dfe6d8;border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .15s}
+.interactive-mcq-option:hover{border-color:#99b88c;background:#fafcf8}
+.interactive-mcq-option.selected{border-color:var(--green);background:#f5faf2;box-shadow:0 0 0 1px var(--green)}
+.option-letter-box{width:26px;height:26px;border-radius:50%;background:#edf3e6;color:#35532b;font-weight:800;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.interactive-mcq-option.selected .option-letter-box{background:var(--green);color:#ffffff}
+
+/* Fill-in-the-blank Format */
+.interactive-blank-box{background:#f9fbf7;border:1px solid #dde5d5;border-radius:12px;padding:20px;margin-top:12px}
+.blank-template-text{font-size:14px;line-height:1.9;color:#283c30;margin-bottom:14px}
+.blank-highlight{display:inline-block;background:#e5ebd9;border-bottom:2px solid var(--green);padding:2px 8px;border-radius:4px;font-weight:700;color:#283c30}
+.blank-input-row{display:flex;gap:10px;align-items:center}
+.blank-input-field{flex:1;border:1.5px solid #d4dfcb;border-radius:8px;padding:10px 14px;font-size:14px;background:#ffffff}
+.blank-input-field:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px #315c4515}
+
+/* Matching Format */
+.interactive-matching-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px}
+.matching-column{display:flex;flex-direction:column;gap:8px}
+.matching-column-title{font-size:11px;font-weight:750;color:#6d8061;letter-spacing:.5px;margin-bottom:4px}
+.matching-card{background:#ffffff;border:1.5px solid #dfe6d8;border-radius:10px;padding:12px 14px;font-size:12px;color:#283c30;cursor:pointer;transition:all .15s}
+.matching-card:hover{border-color:#a8c49d;background:#fafcf8}
+.matching-card.selected{border-color:var(--green);background:#f2f8ee;box-shadow:0 0 0 2px #315c4525}
+.matching-card.matched{background:#edf4e8;border-color:#b9d2ab;color:#355a29;font-weight:600}
+.matching-status-bar{margin-top:12px;padding:10px 14px;background:#f5f8f0;border:1px solid #e0ebd7;border-radius:8px;display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#4c663f}
+
+html,body{max-width:100vw;overflow-x:hidden}
+
+@media(max-width:950px){
+  .home-pillars{grid-template-columns:repeat(2,1fr)}
+  .home-journey-steps{grid-template-columns:1fr}
+  .lecture-timeline{grid-template-columns:repeat(2,1fr)}
+  .assessment-lifecycle-tracker{grid-template-columns:repeat(2,1fr)}
+  .pyramid-tier{grid-template-columns:1fr;gap:10px}
+}
+@media(max-width:680px){
+  .topbar{height:auto!important;min-height:60px;padding:10px 16px!important;flex-wrap:wrap!important;gap:8px!important;justify-content:space-between}
+  .brand{font-size:24px}
+  .nav-links{order:3;width:100%;margin:4px 0 0;justify-content:flex-start;overflow-x:auto;padding-bottom:2px;gap:4px;scrollbar-width:none}
+  .nav-links::-webkit-scrollbar{display:none}
+  .nav-tab{font-size:11px;padding:5px 10px;white-space:nowrap;flex-shrink:0}
+  .header-actions .local-badge{display:none!important}
+  .home-pillars{grid-template-columns:1fr}
+  .lecture-timeline{grid-template-columns:1fr}
+  .assessment-lifecycle-tracker{grid-template-columns:1fr}
+  .interactive-matching-grid{grid-template-columns:1fr}
+  .taxonomy-science-grid{grid-template-columns:1fr}
+  .overall-progress-strip{padding:12px 14px;gap:10px}
+  .progress-strip-left{min-width:0;width:100%}
+}
+
